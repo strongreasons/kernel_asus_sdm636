@@ -81,8 +81,4 @@
 &msm_sdw_codec {
 	status = "disabled";
 };
-
-&cdc_sdw_gpios {
-	status = "disabled";
-};
 /* Huaqin add for ZQL1650-155 by xudayi at 2018/02/02 end */
