@@ -2,18 +2,19 @@
 
 #set -e
 
+HOME=/home/karthik/ok
 ## Copy this script inside the kernel directory
 KERNEL_DEFCONFIG=X00TD_defconfig
 ANYKERNEL3_DIR=$PWD/AnyKernel3/
 FINAL_KERNEL_ZIP=Zeus-X00T-$(date '+%Y%m%d').zip
-export PATH="$HOME/trb_clang/bin:$PATH"
+export PATH="$HOME/clang/bin:$PATH"
 export ARCH=arm64
 export SUBARCH=arm64
-export KBUILD_COMPILER_STRING="$($HOME/trb_clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
+export KBUILD_COMPILER_STRING="$($HOME/clang/bin/clang --version | head -n 1 | perl -pe 's/\(http.*?\)//gs' | sed -e 's/  */ /g' -e 's/[[:space:]]*$//')"
 
-if ! [ -d "$HOME/trb_clang" ]; then
-echo "trb_clang not found! Cloning..."
-if ! git clone https://gitlab.com/varunhardgamer/trb_clang --depth=1 --single-branch ~/trb_clang; then
+if ! [ -d "$HOME/clang" ]; then
+echo "clang not found! Cloning..."
+if ! git clone https://gitlab.com/varunhardgamer/clang --depth=1 --single-branch ~/clang; then
 echo "Cloning failed! Aborting..."
 exit 1
 fi
@@ -40,20 +41,20 @@ echo -e "$blue***********************************************"
 echo "          BUILDING KERNEL          "
 echo -e "***********************************************$nocol"
 make $KERNEL_DEFCONFIG O=out
-make -j$(nproc --all) O=out LLVM=1\
+make -j8 O=out LLVM=1\
 		ARCH=arm64 \
-		AS="$HOME/trb_clang/bin/llvm-as" \
-		CC="$HOME/trb_clang/bin/clang" \
-		LD="$HOME/trb_clang/bin/ld.lld" \
-		AR="$HOME/trb_clang/bin/llvm-ar" \
-		NM="$HOME/trb_clang/bin/llvm-nm" \
-		STRIP="$HOME/trb_clang/bin/llvm-strip" \
-		OBJCOPY="$HOME/trb_clang/bin/llvm-objcopy" \
-		OBJDUMP="$HOME/trb_clang/bin/llvm-objdump" \
+		AS="$HOME/clang/bin/llvm-as" \
+		CC="$HOME/clang/bin/clang" \
+		LD="$HOME/clang/bin/ld.lld" \
+		AR="$HOME/clang/bin/llvm-ar" \
+		NM="$HOME/clang/bin/llvm-nm" \
+		STRIP="$HOME/clang/bin/llvm-strip" \
+		OBJCOPY="$HOME/clang/bin/llvm-objcopy" \
+		OBJDUMP="$HOME/clang/bin/llvm-objdump" \
 		CLANG_TRIPLE=aarch64-linux-gnu- \
-		CROSS_COMPILE="$HOME/trb_clang/bin/clang" \
-                CROSS_COMPILE_COMPAT="$HOME/trb_clang/bin/clang" \
-                CROSS_COMPILE_ARM32="$HOME/trb_clang/bin/clang"
+		CROSS_COMPILE="$HOME/clang/bin/clang" \
+                CROSS_COMPILE_COMPAT="$HOME/clang/bin/clang" \
+                CROSS_COMPILE_ARM32="$HOME/clang/bin/clang"
 
 echo "**** Kernel Compilation Completed ****"
 echo "**** Verify Image.gz-dtb ****"
