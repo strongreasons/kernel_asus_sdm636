@@ -40,7 +40,7 @@
 #include <linux/uaccess.h>
 
 /* Report battery temperature start */
-#define	START_REPORT_BAT_TEMPRATURE	620
+#define	START_REPORT_BAT_TEMPRATURE	820
 /* Report battery temperature end */
 
 #ifdef CONFIG_FORCE_FAST_CHARGE
@@ -2692,10 +2692,10 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 	return 0;
 }
 
-#define SDP_CURRENT_UA			500000
+#define SDP_CURRENT_UA			900000
 #define CDP_CURRENT_UA			1500000
-#ifdef HQ_BUILD_FACTORY
-#define DCP_CURRENT_UA			2000000
+#ifdef CONFIG_MACH_ASUS_X00T
+#define DCP_CURRENT_UA			2100000
 #else
 #define DCP_CURRENT_UA			500000
 #endif
@@ -3725,7 +3725,7 @@ void jeita_rule(void)
 	case JEITA_STATE_LESS_THAN_0:
 		charging_enable = EN_BAT_CHG_EN_COMMAND_FALSE;
 		FV_CFG_reg_value = SMBCHG_FLOAT_VOLTAGE_VALUE_4P357;
-		FCC_reg_value = SMBCHG_FAST_CHG_CURRENT_VALUE_1400MA;
+		FCC_reg_value = SMBCHG_FAST_CHG_CURRENT_VALUE_1500MA;
 		break;
 	case JEITA_STATE_RANGE_0_to_100:
 		charging_enable = EN_BAT_CHG_EN_COMMAND_TRUE;
@@ -3758,9 +3758,12 @@ void jeita_rule(void)
 		break;
 	}
 
-	if (smartchg_stop_flag) {
+	if (smartchg_stop_flag || smartchg_stop_flag) {
 		printk("%s: Stop charging, smart = %d\n", __func__, smartchg_stop_flag);
 		charging_enable = EN_BAT_CHG_EN_COMMAND_FALSE;
+	} else {
+		FV_CFG_reg_value = SMBCHG_FLOAT_VOLTAGE_VALUE_4P357;
+		FCC_reg_value = SMBCHG_FAST_CHG_CURRENT_VALUE_3000MA;
 	}
 
 	rc = jeita_status_regs_write(charging_enable, FV_CFG_reg_value, FCC_reg_value);
@@ -3824,7 +3827,7 @@ void asus_chg_flow_work(struct work_struct *work)
 	const struct apsd_result *apsd_result;
 	int rc;
 	u8 set_icl;
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 	u8 USBIN_1_cc;
 #endif
 
@@ -3844,7 +3847,7 @@ void asus_chg_flow_work(struct work_struct *work)
 	switch (apsd_result->bit) {
 	case SDP_CHARGER_BIT:
 	case FLOAT_CHARGER_BIT:
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 		rc = smblib_read(smbchg_dev, USBIN_CURRENT_LIMIT_CFG_REG, &USBIN_1_cc);   //reg=1370
 		if (rc < 0)
 			printk("%s: Couldn't read fast_CURRENT_LIMIT_CFG_REG\n", __func__);
@@ -3864,7 +3867,7 @@ void asus_chg_flow_work(struct work_struct *work)
 			USBIN_CURRENT_LIMIT_MASK, set_icl);
 		if (rc < 0)
 			printk("%s: Failed to set USBIN_CURRENT_LIMIT\n", __func__);
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 		rc = smblib_read(smbchg_dev, USBIN_CURRENT_LIMIT_CFG_REG, &USBIN_1_cc);   //reg=1370
 		if (rc < 0)
 			printk("%s: Couldn't read fast_CURRENT_LIMIT_CFG_REG\n", __func__);
@@ -3887,7 +3890,7 @@ void asus_chg_flow_work(struct work_struct *work)
 	case DCP_CHARGER_BIT | QC_3P0_BIT:
 	case DCP_CHARGER_BIT | QC_2P0_BIT:
 	case DCP_CHARGER_BIT:
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 		rc = smblib_read(smbchg_dev, USBIN_CURRENT_LIMIT_CFG_REG, &USBIN_1_cc);   //reg=1370
 		if (rc < 0)
 			printk("%s: Couldn't read fast_CURRENT_LIMIT_CFG_REG\n", __func__);
@@ -4034,7 +4037,7 @@ void asus_adapter_adc_work(struct work_struct *work)
 void asus_insertion_initial_settings(struct smb_charger *chg)
 {
 	int rc;
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 	u8 USBIN_cc;
 #endif
         flag_repeat = 0;
@@ -4107,7 +4110,7 @@ void asus_insertion_initial_settings(struct smb_charger *chg)
 	if (rc < 0) {
 		dev_err(chg->dev, "Couldn't set default USBIN_LOAD_CFG_REG rc=%d\n", rc);
 	}
-#ifndef HQ_BUILD_FACTORY
+#ifndef CONFIG_MACH_ASUS_X00T
 	rc = smblib_read(chg, USBIN_CURRENT_LIMIT_CFG_REG, &USBIN_cc);   //reg=1370    usb in current
 	if (rc < 0)
 		printk("%s: Couldn't read fast_CURRENT_LIMIT_CFG_REG\n", __func__);

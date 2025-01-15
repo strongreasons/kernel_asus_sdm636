@@ -331,7 +331,7 @@ static struct class_attribute pl_attributes[] = {
 /***********
  *  TAPER  *
 ************/
-#define MINIMUM_PARALLEL_FCC_UA		500000
+#define MINIMUM_PARALLEL_FCC_UA		1000000
 #define PL_TAPER_WORK_DELAY_MS		500
 #define TAPER_RESIDUAL_PCT		75
 static void pl_taper_work(struct work_struct *work)
@@ -857,7 +857,7 @@ static int usb_icl_vote_callback(struct votable *votable, void *data,
 	vote(chip->pl_disable_votable, ICL_CHANGE_VOTER, true, 0);
 
 	/*
-	 * if (ICL < 1400)
+	 * if (ICL < 1500)
 	 *	disable parallel charger using USBIN_I_VOTER
 	 * else
 	 *	instead of re-enabling here rely on status_changed_work
@@ -865,7 +865,7 @@ static int usb_icl_vote_callback(struct votable *votable, void *data,
 	 *	unvote USBIN_I_VOTER) the status_changed_work enables
 	 *	USBIN_I_VOTER based on settled current.
 	 */
-	if (icl_ua <= 1400000)
+	if (icl_ua <= 1500000)
 		vote(chip->pl_enable_votable_indirect, USBIN_I_VOTER, false, 0);
 	else
 		schedule_delayed_work(&chip->status_change_work,
@@ -887,7 +887,7 @@ static int usb_icl_vote_callback(struct votable *votable, void *data,
 
 	if (rerun_aicl) {
 		/* set a lower ICL */
-		pval.intval = max(pval.intval - ICL_STEP_UA, ICL_STEP_UA);
+		pval.intval = icl_ua - ICL_STEP_UA, ICL_STEP_UA;
 		power_supply_set_property(chip->main_psy,
 				POWER_SUPPLY_PROP_CURRENT_MAX,
 				&pval);
@@ -1160,7 +1160,7 @@ static void handle_main_charge_type(struct pl_data *chip)
 	chip->charge_type = pval.intval;
 }
 
-#define MIN_ICL_CHANGE_DELTA_UA		300000
+#define MIN_ICL_CHANGE_DELTA_UA		900000
 static void handle_settled_icl_change(struct pl_data *chip)
 {
 	union power_supply_propval pval = {0, };
@@ -1194,10 +1194,10 @@ static void handle_settled_icl_change(struct pl_data *chip)
 	}
 	main_limited = pval.intval;
 
-	if ((main_limited && (main_settled_ua + chip->pl_settled_ua) < 1400000)
+	if ((main_limited && (main_settled_ua + chip->pl_settled_ua) < 1500000)
 			|| (main_settled_ua == 0)
 			|| ((total_current_ua >= 0) &&
-				(total_current_ua <= 1400000)))
+				(total_current_ua <= 1500000)))
 		vote(chip->pl_enable_votable_indirect, USBIN_I_VOTER, false, 0);
 	else
 		vote(chip->pl_enable_votable_indirect, USBIN_I_VOTER, true, 0);
